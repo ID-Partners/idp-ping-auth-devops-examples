@@ -68,7 +68,7 @@ services:
     ports:
       - "8082:8081"
     environment:
-      - LAUNCHDARKLY_SDKKEY=sdk-0b9b2fb6-e74e-46f8-8a75-eab8a0e9055f
+      - LAUNCHDARKLY_SDKKEY=<enter your key>
       - LAUNCHDARKLY_APPID=demo-app
       - LAUNCHDARKLY_VERSION=1.0.0
       - SERVER_PORT=8081
