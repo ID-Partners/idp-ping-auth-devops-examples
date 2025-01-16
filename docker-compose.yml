@@ -34,8 +34,10 @@ services:
     environment:
      - PING_EXTERNAL_BASE_URL=localhost:7443
      - LICENSE_DIR=/config
-     - LICENSE_FILE_NAME=pingauthorize.lic 
      - PING_IDENTITY_ACCEPT_EULA=YES
+    #  - LICENSE_FILE_NAME=pingauthorize.lic
+     - PING_IDENTITY_DEVOPS_USER=<enter your user>
+     - PING_IDENTITY_DEVOPS_KEY=<enter your key>
      - TAIL_LOG_FILES=/logs/access.log
      - DECISION_POINT_SHARED_SECRET=2FederateM0re
      - PING_OPTIONS_FILE=/opt/server-profile/instance/custom-options.yml 
@@ -73,7 +75,6 @@ services:
       - LOGGING_LEVEL_ROOT=INFO
       - LOGGING_LEVEL_COM_EXAMPLE=DEBUG
       - LAUNCHDARKLY_LOGLEVEL=INFO
-
     networks:
       - internal-network
     depends_on:
@@ -85,10 +86,9 @@ services:
     container_name: authZEN-pdp
     volumes:
       - /run/secrets                          # Mount tmpfs directory for secrets
-      - ./option-cache:/opt/logs/option-cache # Mount option-cache directory
       - ./config:/config
       - ./config/pd.profile:/opt/staging/pd.profile
-      - ./webapps/console.war:/opt/in/instance/webapps/console.war
+      - ./webapps/console.war:/opt/in/instance/webapps/console.war  # Mount the console.war to enable console for pdp
     tmpfs:
       - /run/secrets:rw,nosuid,nodev,noexec,mode=0777  # Set tmpfs with write permissions
     ports:
@@ -99,7 +99,9 @@ services:
       - LICENSE_DIR=/config
       - INSTANCE_ID=sd1-task1
       - PING_IDENTITY_ACCEPT_EULA=YES
-      - LICENSE_FILE_NAME=pingauthorize.lic
+      # - LICENSE_FILE_NAME=pingauthorize.lic
+      - PING_IDENTITY_DEVOPS_USER=<enter your user>
+      - PING_IDENTITY_DEVOPS_KEY=<enter your key>
       - PING_INSTANCE_NAME=authZEN
       - JSON_API_HEADER_NAME=client
       - PDP_SHARED_SECRET=2FederateM0re
