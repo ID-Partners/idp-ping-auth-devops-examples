@@ -1,0 +1,9 @@
+dsconfig create-external-server \
+    --server-name policy-server  \
+    --type policy  \
+    --set base-url:https://ping-authorize-pap:1443  \
+    --set hostname-verification-method:allow-all \
+    --set "shared-secret:${PDP_SHARED_SECRET}" \
+    --set "decision-node:${POLICY_NODE_ID}" \
+    --set "branch:${POLICY_BRANCH}" \
+    --set trust-manager-provider:JKS

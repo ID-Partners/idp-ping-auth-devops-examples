@@ -1,0 +1,7 @@
+dsconfig create-trust-manager-provider \
+    --provider-name JKS  \
+    --type file-based  \
+    --set enabled:true  \
+    --set trust-store-file:/config/pdp.jks  \
+    --set trust-store-type:JKS  \
+    --set trust-store-pin:changeit

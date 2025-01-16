@@ -1,0 +1,4 @@
+dsconfig set-policy-decision-service-prop \
+    --set policy-server:policy-server \
+    --set pdp-mode:external \
+    --set trust-framework-version:v2

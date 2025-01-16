@@ -1,0 +1,4 @@
+dsconfig set-log-publisher-prop \
+    --publisher-name 'Console JSON Error Logger'  \
+    --set write-multi-line-messages:true \
+    --set enabled:true 

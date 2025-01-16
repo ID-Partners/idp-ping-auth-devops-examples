@@ -1,0 +1,13 @@
+
+dsconfig create-sideband-api-shared-secret \
+    --secret-name sideband  \
+    --set "shared-secret:${SIDEBAND_SHARED_SECRET}"
+
+dsconfig set-http-servlet-extension-prop \
+    --extension-name 'Sideband API'  \
+    --set "shared-secret-header-name:${SIDEBAND_SECRET_HEADER_NAME}"  \
+    --set shared-secrets:sideband 
+
+dsconfig set-sideband-api-endpoint-prop \
+    --endpoint-name Default  \
+    --set "service:${SIDEBAND_SERVICE}"  

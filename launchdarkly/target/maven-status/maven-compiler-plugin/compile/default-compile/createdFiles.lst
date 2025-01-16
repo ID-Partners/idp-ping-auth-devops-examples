@@ -1,0 +1,6 @@
+com/idp/launchdarkly/FeatureFlagController.class
+com/idp/launchdarkly/LaunchDarklyService.class
+com/idp/launchdarkly/FeatureFlagController$DetailResponse.class
+com/idp/launchdarkly/LaunchDarklyService$1.class
+com/idp/launchdarkly/FeatureFlagController$FlagResponse.class
+com/idp/launchdarkly/SidecarApplication.class

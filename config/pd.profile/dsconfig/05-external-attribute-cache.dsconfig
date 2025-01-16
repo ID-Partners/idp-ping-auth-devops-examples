@@ -1,0 +1,4 @@
+dsconfig create-external-attribute-cache \
+     --cache-name pdp-cache \
+     --type redis-single-instance \
+     --set redis-node-addresses:rediss://redis-stack:6379
