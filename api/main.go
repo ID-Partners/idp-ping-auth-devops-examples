@@ -58,6 +58,8 @@ func PaymentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Payment Request Received: ", paymentReq)
+
 	// Here, you can assume the RAR validation and authorization were already handled by Ping Authorize.
 	// Process payment (mock payment processing)
 	response := map[string]interface{}{

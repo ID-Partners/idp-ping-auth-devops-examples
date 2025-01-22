@@ -6,7 +6,8 @@ dsconfig create-sideband-api-shared-secret \
 dsconfig set-http-servlet-extension-prop \
     --extension-name 'Sideband API'  \
     --set "shared-secret-header-name:${SIDEBAND_SECRET_HEADER_NAME}"  \
-    --set shared-secrets:sideband 
+    --set shared-secrets:sideband \
+    --set request-context-method:request
 
 dsconfig set-sideband-api-endpoint-prop \
     --endpoint-name Default  \

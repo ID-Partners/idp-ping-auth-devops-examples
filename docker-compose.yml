@@ -36,8 +36,8 @@ services:
      - LICENSE_DIR=/config
      - PING_IDENTITY_ACCEPT_EULA=YES
     #  - LICENSE_FILE_NAME=pingauthorize.lic
-     - PING_IDENTITY_DEVOPS_USER=<enter your user>
-     - PING_IDENTITY_DEVOPS_KEY=<enter your key>
+    #  - PING_IDENTITY_DEVOPS_USER=changeit
+    #  - PING_IDENTITY_DEVOPS_KEY=changeit
      - TAIL_LOG_FILES=/logs/access.log
      - DECISION_POINT_SHARED_SECRET=2FederateM0re
      - PING_OPTIONS_FILE=/opt/server-profile/instance/custom-options.yml 
@@ -51,8 +51,9 @@ services:
     #  - ADDITIONAL_SETUP_ARGS="--enableSelfGovernance"
     #  - PING_OIDC_TLS_VALIDATION=NONE
     volumes:
-      - ./config:/config
+      - ./pdp:/config
       - ./pap/server-profile:/opt/server-profile/instance
+      - ./certs:/config/certs
     networks:
       - external-network
       - internal-network
@@ -68,7 +69,7 @@ services:
     ports:
       - "8082:8081"
     environment:
-      - LAUNCHDARKLY_SDKKEY=<enter your key>
+      - LAUNCHDARKLY_SDKKEY=enteryourkey
       - LAUNCHDARKLY_APPID=demo-app
       - LAUNCHDARKLY_VERSION=1.0.0
       - SERVER_PORT=8081
@@ -80,15 +81,35 @@ services:
     depends_on:
       - ping-authorize
 
+  newman-tests:
+    image: postman/newman
+    container_name: newman-tests
+    depends_on:
+      - kong
+      - ping-authorize
+    networks:
+      - internal-network
+      - external-network
+    volumes:
+      - ./postman-tests:/etc/newman
+    command: >
+      run /etc/newman/dyn-auth-examples.postman_collection.json
+      --environment /etc/newman/dyn-auth-examples.postman_environment.json
+      --reporters cli,junit
+      --reporter-junit-export /etc/newman/report-junit.xml
+      --delay-request 30000
+      --timeout-request 60000
+            
 
   ping-authorize:
     image: pingidentity/pingauthorize:edge
     container_name: authZEN-pdp
     volumes:
       - /run/secrets                          # Mount tmpfs directory for secrets
-      - ./config:/config
-      - ./config/pd.profile:/opt/staging/pd.profile
+      - ./pdp:/config
+      - ./pdp/pd.profile:/opt/staging/pd.profile
       - ./webapps/console.war:/opt/in/instance/webapps/console.war  # Mount the console.war to enable console for pdp
+      - ./certs:/config/certs
     tmpfs:
       - /run/secrets:rw,nosuid,nodev,noexec,mode=0777  # Set tmpfs with write permissions
     ports:
@@ -100,8 +121,8 @@ services:
       - INSTANCE_ID=sd1-task1
       - PING_IDENTITY_ACCEPT_EULA=YES
       # - LICENSE_FILE_NAME=pingauthorize.lic
-      - PING_IDENTITY_DEVOPS_USER=<enter your user>
-      - PING_IDENTITY_DEVOPS_KEY=<enter your key>
+      # - PING_IDENTITY_DEVOPS_USER=changeit
+      # - PING_IDENTITY_DEVOPS_KEY=changeit
       - PING_INSTANCE_NAME=authZEN
       - JSON_API_HEADER_NAME=client
       - PDP_SHARED_SECRET=2FederateM0re

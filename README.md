@@ -24,3 +24,35 @@ curl -i -X POST http://localhost:8000/payment \
          "paymentDetails": "Test Payment"
      }'
  ```
+
+curl --location 'http://kong:8000/payment' \
+--header 'Content-Type: application/json' \
+--data '{
+    "debtorAccount": "12345",
+    "creditorAccount": "67890",
+    "amount": 100.5,
+    "currency": "USD",
+    "paymentDetails": "Test Payment"
+}'
+
+
+ docker compose -f docker-compose.yml -f docker-compose.local.yml up
+
+
+ **{
+    "domain": "",
+    "service": "PaymentDemo",
+    "identityProvider": "",
+    "action": "inbound-POST",
+    "attributes": {
+        "HttpRequest.RequestBody": "{\"debtorAccount\":\"12345\",\"creditorAccount\":\"67890\",\"amount\":100.5,\"currency\":\"USD\",\"paymentDetails\":\"Test Payment\"}",
+        "HttpRequest.CorrelationId": "9780c981-4160-4878-8933-c1d6d7ae2a66",
+        "HttpRequest.RequestURI": "http://localhost:8000/payment",
+        "HttpRequest.IPAddress": "172.25.0.1",
+        "HttpRequest.ResourcePath": "payment",
+        "Gateway": "{\"_BasePath\":\"/\",\"_TrailingPath\":\"payment\"}",
+        "HttpRequest.RequestHeaders": "{\"content-type\":[\"application/json\"],\"user-agent\":[\"PostmanRuntime/7.43.0\"],\"accept\":[\"*/*\"],\"cache-control\":[\"no-cache\"],\"host\":[\"localhost:8000\"],\"content-length\":[\"146\"],\"postman-token\":[\"4239d925-91d8-495d-af3d-4d8633cbc418\"],\"connection\":[\"keep-alive\"],\"accept-encoding\":[\"gzip, deflate, br\"]}",
+        "HttpRequest.ResponseHeaders": "{}"
+    }
+}
+**

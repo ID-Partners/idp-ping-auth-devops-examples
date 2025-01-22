@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="dyn-auth-examples" tests="1" time="0.000">
+  <testsuite name="http://kong:8000/payment" id="7a99ab8e-7426-4ae3-9763-705fcdc2dab7" timestamp="2025-01-21T06:28:41.452Z" tests="0" failures="0" errors="1" time="0.000">
+    <system-err><![CDATA[Iteration: 0
+RequestError: Error: connect ECONNREFUSED 127.0.0.1:8000
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1278:16)
+
+---
+]]></system-err>
+  </testsuite>
+</testsuites>

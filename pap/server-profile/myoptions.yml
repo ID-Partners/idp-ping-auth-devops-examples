@@ -34,9 +34,9 @@ core:
 keystores:
   # Define key stores used by policy information providers here.
   #
-  - name: CustomKeyStore
-    resource: /config/certs/pap.jks
-    password: changeit
+  #  - name: CustomKeyStore
+  #    resource: /path/to/custom-keystore.jks
+  #    password: keystore-password
 truststores:
   # Define trust stores used by policy information providers here.
   #
@@ -56,11 +56,10 @@ deploymentPackageData:
   #    password: private-key-password
 deploymentPackageStores:
   # Define deployment package store publishing targets here.
-  #
-  # - name: Filesystem store
-  #   description: File system directory store
-  #   type: filesystem
-  #   path: /path/to/deployment-package-store/
+  - name: Filesystem store
+    description: File system directory store
+    type: filesystem
+    path: ./packages
   # - name: Signed filesystem store
   #   description: Signed file system directory store
   #   type: filesystem
@@ -254,17 +253,15 @@ logging:
       additive: false
       appenders:
         - type: console
-          layout:
-            type: json
           target: stdout
-          logFormat: "DECISION [%date{ISO8601}] %msg%n"
+          logFormat: "[%date{ISO8601}] %msg%n"
     "ADMIN_POINT_AUDIT":
-      level: ERROR
+      level: INFO
       additive: false
       appenders:
         - type: console
           target: stdout
-          logFormat: "AUDIT [%date{ISO8601}] %msg%n"
+          logFormat: "[%date{ISO8601}] %msg%n"
     "QUERY_AUDIT_LOG":
       level: INFO
       additive: false
@@ -275,12 +272,8 @@ logging:
     metrics:
       additive: false
       appenders:
-        - type: file
-          currentLogFilename: logs/metrics.log
-          maxFileSize: 250MB
-          archive: true
-          archivedLogFilenamePattern: logs/metrics.%i.log.gz
-          archivedFileCount: 10
+        - type: console
+          target: stdout
           logFormat: "logger=metrics, timestamp=%date{yyyyMMdd'T'HHmmss.SSS}, %msg%n"
   appenders:
     - type: console
