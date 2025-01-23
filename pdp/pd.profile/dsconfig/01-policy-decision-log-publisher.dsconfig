@@ -3,7 +3,6 @@ dsconfig set-log-publisher-prop \
   --set log-file:"logs/${INSTANCE_ID}-policy-decisions.log" \
   --set sign-log:true 
 
-
 dsconfig set-log-publisher-prop \
     --publisher-name 'Policy Query Logger'  \
     --set sign-log:true 

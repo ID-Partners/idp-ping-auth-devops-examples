@@ -56,3 +56,137 @@ curl --location 'http://kong:8000/payment' \
     }
 }
 **
+
+
+
+# Kong Manual Config Scripts
+
+
+
+curl -i -X POST http://localhost:8002/services/ \
+     --data "name=pdp-service1" \
+     --data "url=https://localhost:8000/request"
+
+     curl -i -X POST http://localhost:8002/services/pdp-service1/routes \
+     --data "paths[]=/authzen1"
+
+     curl -i -X POST http://localhost:8002/services/pdp-service1/plugins \
+     --data "name=ping-auth" \
+     --data "config.secret_header_name=PDG-TOKEN" \
+     --data "config.shared_secret=2FederateM0re" \
+     --data "config.service_url=https://ping-authorize:1443"
+
+     curl -i http://localhost:8000/authzen1
+
+curl -vIk https://ping-authorize:1443/authzen
+
+curl -vk --location 'https://ping-authorize:1443/authzen' \
+--header 'PDG-TOKEN: 2FederateM0re' \
+--header 'Content-Type: application/json' \
+--data '{
+    "domain": "idpartners.authorization_details.account_information",
+    "service": "Authorization",
+    "action": "authorize",
+    "attributes": {
+        "idp.account_information.type": "\"account_information\"",
+        "idp.account_information.recurringIndicator": "true",
+        "UserID": "joe",
+        "idp.account_information.access": "{\"accounts\":[],\"balances\":[],\"transactions\":[]}"
+    }
+}'
+
+
+curl -i -X POST http://localhost:8002/services/ \
+     --data "name=go-api" \
+     --data "url=http://go-app:8081"
+
+curl -i -X POST http://localhost:8002/services/go-api/routes \
+     --data "paths[]=/" \
+     --data "methods[]=POST"
+
+curl -i -X POST http://localhost:8002/services/go-api/plugins \
+     --data "name=ping-auth" \
+     --data "config.service_url=https://ping-authorize:1443/" \
+     --data "config.shared_secret=2FederateM0re" \
+     --data "config.secret_header_name=CLIENT-TOKEN" 
+
+curl -i -X PATCH http://localhost:8002/plugins/3f948aa8-85df-459f-b1c8-fb96504b899c \
+     --data "config.verify_service_certificate=false" \
+     --data "config.enable_debug_logging=true"
+
+
+# List services
+curl -X GET http://localhost:8002/services
+
+# List routes
+curl -X GET http://localhost:8002/routes
+
+# List plugins
+curl -X GET http://localhost:8002/plugins
+
+
+curl -i -X POST http://localhost:8000/payment \
+     --header "Content-Type: application/json" \
+     --data '{
+         "debtorAccount": "12345",
+         "creditorAccount": "67890",
+         "amount": 100.50,
+         "currency": "USD",
+         "paymentDetails": "Test Payment"
+     }'
+
+
+curl -i -X POST http://localhost:8081/payment \
+     --header "Content-Type: application/json" \
+     --data '{
+         "debtorAccount": "12345",
+         "creditorAccount": "67890",
+         "amount": 100.50,
+         "currency": "USD",
+         "paymentDetails": "Test Payment"
+     }'
+
+     docker-compose exec kong curl -v POST http://go-app:8081/payment \
+     --header "Content-Type: application/json" \
+     --data '{
+         "debtorAccount": "12345",
+         "creditorAccount": "67890",
+         "amount": 100.50,
+         "currency": "USD",
+         "paymentDetails": "Test Payment"
+     }'
+
+
+
+
+docker run -d \
+  --name kong \
+  --restart always \
+  -e KONG_DATABASE="off" \
+  -e KONG_DECLARATIVE_CONFIG="/kong/declarative/kong.yaml" \
+  -e KONG_LOG_LEVEL="debug" \
+  -e KONG_PROXY_ACCESS_LOG="/dev/stdout" \
+  -e KONG_ADMIN_ACCESS_LOG="/dev/stdout" \
+  -e KONG_PROXY_ERROR_LOG="/dev/stderr" \
+  -e KONG_ADMIN_ERROR_LOG="/dev/stderr" \
+  -e KONG_ADMIN_GUI_URL="http://localhost:8002" \
+  -e KONG_ADMIN_LISTEN="0.0.0.0:8001, 0.0.0.0:8444 ssl" \
+  -e KONG_PROXY_LISTEN="0.0.0.0:8000, 0.0.0.0:8443 ssl" \
+  -e KONG_PLUGINS="bundled,ping-auth" \
+  -p 8000:8000 \
+  -p 9443:8443 \
+  -p 8001:8001 \
+  -p 8002:8002 \
+  -p 8444:8444 \
+  -v "$(pwd)/kong/scripts:/kong-scripts" \
+  kong-ping-auth:latest
+
+  docker run -d \
+  --name kong \
+  --restart always \
+  -e KONG_DATABASE="off" \
+  -e KONG_DECLARATIVE_CONFIG="/kong/declarative/kong.yaml" \
+  -e KONG_PLUGINS="bundled,ping-auth" \
+  -p 8000:8000 \
+  -p 9443:8443 \
+  kong-ping-auth:latest

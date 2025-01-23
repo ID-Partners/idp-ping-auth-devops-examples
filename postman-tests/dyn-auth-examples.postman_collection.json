@@ -7,7 +7,7 @@
 	},
 	"item": [
 		{
-			"name": "http://kong:8000/payment",
+			"name": "http://kong:8000/mock-payment",
 			"request": {
 				"auth": {
 					"type": "inherit"
@@ -29,14 +29,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://kong:8000/payment",
+					"raw": "http://kong:8000/mock-payment",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"kong"
 					],
 					"port": "8000",
 					"path": [
-						"payment"
+						"mock-payment"
 					]
 				}
 			},

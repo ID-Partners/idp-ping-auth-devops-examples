@@ -1,5 +1,9 @@
+dsconfig create-authorization-policy-decision-shared-secret \
+    --secret-name json-api-secret  \
+    --set "shared-secret:${PDP_SHARED_SECRET}"
+    
 dsconfig set-http-servlet-extension-prop \
     --extension-name 'JSON PDP API'  \
-    --set shared-secrets:authZen-Secret \
+    --set shared-secrets:json-api-secret \
     --set "shared-secret-header-name:${JSON_API_HEADER_NAME}" \
     --set correlation-id-response-header:X-CBA-DynAuth-Trace-Id

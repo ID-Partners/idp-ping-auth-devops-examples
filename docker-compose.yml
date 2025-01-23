@@ -4,7 +4,6 @@ services:
     container_name: redis-stack
     ports:
       - "6379:6379"   # Redis default port
-      - "8001:8001"   # Redis Stack API port (for RedisInsight and other tools)
     environment:
       - REDIS_ARGS=--requirepass mypassword  # Set Redis password
     networks:
@@ -35,12 +34,12 @@ services:
      - PING_EXTERNAL_BASE_URL=localhost:7443
      - LICENSE_DIR=/config
      - PING_IDENTITY_ACCEPT_EULA=YES
-    #  - LICENSE_FILE_NAME=pingauthorize.lic
+     - LICENSE_FILE_NAME=PingAuthorize.lic
     #  - PING_IDENTITY_DEVOPS_USER=changeit
     #  - PING_IDENTITY_DEVOPS_KEY=changeit
      - TAIL_LOG_FILES=/logs/access.log
      - DECISION_POINT_SHARED_SECRET=2FederateM0re
-     - PING_OPTIONS_FILE=/opt/server-profile/instance/custom-options.yml 
+     - PING_OPTIONS_FILE=/opt/server-profile/instance/myoptions.yml 
      - KEYSTORE_FILE=/config/certs/pap.jks
      - KEYSTORE_TYPE=JKS
      - KEYSTORE_PIN_FILE=/config/certs/passwords.txt
@@ -51,7 +50,7 @@ services:
     #  - ADDITIONAL_SETUP_ARGS="--enableSelfGovernance"
     #  - PING_OIDC_TLS_VALIDATION=NONE
     volumes:
-      - ./pdp:/config
+      - ./pap:/config
       - ./pap/server-profile:/opt/server-profile/instance
       - ./certs:/config/certs
     networks:
@@ -154,39 +153,23 @@ services:
 
   kong:
     build:
-      context: ./kong-ping-auth-setup
+      context: ./kong
       dockerfile: Dockerfile
     restart: always
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: postgres
-      KONG_PG_PASSWORD: kong
-      KONG_LOG_LEVEL: debug
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_DATABASE: "off"  # Use DB-less mode for declarative config
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yaml
+      KONG_LOG_LEVEL: info
       KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
       KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
       KONG_PLUGINS: bundled,ping-auth
     ports:
       - "8000:8000"  # Proxy
       - "9443:8443"  # Proxy SSL
-      - "8002:8001"  # Admin
+      - "8001:8001"  # Admin
       - "8444:8444"  # Admin SSL
     depends_on:
-      - postgres
       - ping-authorize
-    volumes:
-      - ./kong/scripts:/kong-scripts
-    entrypoint: >
-      /bin/sh -c "
-        kong migrations bootstrap && 
-        kong start && 
-        sleep 5 && 
-        /kong-scripts/configure-kong.sh &&
-        tail -f /dev/null
-      "
     networks:
       - external-network
       - internal-network

@@ -76,12 +76,41 @@ func PaymentHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func CDRHandler(w http.ResponseWriter, r *http.Request) {
+	// Pull out the path parameters using mux.Vars
+	vars := mux.Vars(r)
+	brand := vars["brand"]
+	resource := vars["resource"]
+
+	// Here you can do any logic you need based on the brand and resource,
+	// such as querying a database or another API.
+	// For this example, we'll just return some mock data.
+	response := map[string]interface{}{
+		"status":   "CDR Data Retrieved",
+		"brand":    brand,
+		"resource": resource,
+		"data": map[string]interface{}{
+			// Sample data structure, adapt as needed
+			"accountNumber": "12345678",
+			"balance":       1000.00,
+			"currency":      "AUD",
+			"description":   "Mock CDR data for demonstration",
+		},
+	}
+
+	// Set JSON header and status, then encode response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 func main() {
 	r := mux.NewRouter()
 
 	// Define the Payment route
 	r.HandleFunc("/payment", PaymentHandler).Methods("POST")
 	r.HandleFunc("/intents", IntentsHandler).Methods("POST")
+	r.HandleFunc("/cdr/{brand}/{resource}", CDRHandler).Methods("POST")
 
 	fmt.Println("Server running on port 8081")
 	log.Fatal(http.ListenAndServe(":8081", r))

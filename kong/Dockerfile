@@ -1,4 +1,4 @@
-FROM kong:3.4  
+FROM kong/kong-gateway:3.4
 
 USER root
 RUN apt-get update && apt-get install -y curl && apt-get clean
@@ -8,6 +8,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN luarocks install kong-plugin-ping-auth
-
+# Copy the declarative configuration file
+COPY kong1.yaml /kong/declarative/kong.yaml
 # Return to kong user
 USER kong
