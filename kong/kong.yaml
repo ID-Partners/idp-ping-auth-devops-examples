@@ -1,38 +1,37 @@
 _format_version: "3.0"
 
-services:
-  - name: go-api
-    url: http://go-app:8081
-    routes:
-      - name: go-api-route
-        paths:
-          - /payment
-        methods:
-          - POST
-        response_buffering: false
-      - name: showcase-api-route
-        paths:
-         - /cdr
-        methods:
-          - POST
-        response_buffering: true 
-      plugins:
-        - name: ping-auth
-          config:
-            service_url: https://ping-authorize:1443/
-            shared_secret: 2FederateM0re
-            secret_header_name: CLIENT_TOKEN
-            verify_service_certificate: false
-            enable_debug_logging: true
-
-    
-    routes:
+routes:
   - name: mock-payment-route
     paths:
-      - /payment
+      - /mock-payment
     methods:
       - POST
     plugins:
+      - name: ping-auth
+        config:
+          service_url: https://ping-authorize:1443/
+          shared_secret: 2FederateM0re
+          secret_header_name: CLIENT_TOKEN
+          verify_service_certificate: false
+          enable_debug_logging: false
+      - name: request-termination
+        config:
+          status_code: 200
+          content_type: application/json
+          body: '{"amount":100.5,"creditorAccount":"67890","currency":"USD","debtorAccount":"12345","status":"Payment Processed","transactionId":2865}'
+  - name: mock-cdr-route
+    paths:
+      - /cdr/cba/account
+    methods:
+      - POST
+    plugins:
+      - name: ping-auth
+        config:
+          service_url: https://ping-authorize:1443/
+          shared_secret: 2FederateM0re
+          secret_header_name: CLIENT_TOKEN
+          verify_service_certificate: false
+          enable_debug_logging: false
       - name: request-termination
         config:
           status_code: 200

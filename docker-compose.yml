@@ -11,20 +11,6 @@ services:
     volumes:
       - ./redis-data:/data  # Persist Redis data
 
-  go-app:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    container_name: go-app
-    ports:
-      - "8081:8081"  # Map the application's port
-    networks:
-      - internal-network
-      - external-network
-    depends_on:
-      - redis-stack
-      - postgres
-
   ping-authorize-pap:
     image: pingidentity/pingauthorizepap:edge
     container_name: ping-authorize-pap

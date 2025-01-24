@@ -9,6 +9,6 @@ RUN apt-get update && \
 
 RUN luarocks install kong-plugin-ping-auth
 # Copy the declarative configuration file
-COPY kong1.yaml /kong/declarative/kong.yaml
+COPY kong.yaml /kong/declarative/kong.yaml
 # Return to kong user
 USER kong
