@@ -34,7 +34,7 @@ public class LaunchDarklyService {
 }
 
 
-## Endpoints Overview
+# Endpoints Overview
 
 All endpoints are served under the base path:
 
@@ -42,7 +42,7 @@ All endpoints are served under the base path:
 
 Each endpoint uses query parameters to customize the LaunchDarkly feature flag evaluation.
 
-1. GET /flags
+## 1. GET /flags
 
 Description
 Evaluates a feature flag and returns a string or boolean result (based on the type parameter).
@@ -82,7 +82,7 @@ Response might be:
 
 If flagKey is not provided, LaunchDarkly may return the default value depending on your implementation in LaunchDarklyService.
 
-2. GET /flags/detail
+## 2. GET /flags/detail
 
 Description
 Evaluates a boolean flag but returns additional information (the “reason” the flag had that particular value), using LaunchDarkly’s EvaluationDetail.
@@ -105,7 +105,7 @@ Sample Response
 
 Where value is the boolean evaluation, and reason can show if it was the default, a specific targeting rule, etc.
 
-3. GET /flags/json
+## 3. GET /flags/json
 
 Description
 Evaluates a JSON variation from LaunchDarkly. For example, if you have a feature flag that returns a JSON object or array, you can fetch it here.
@@ -125,7 +125,7 @@ Sample Response
   "anotherField": 123
 }
 
-4. GET /flags/multi
+## 4. GET /flags/multi
 
 Description
 Demonstrates a multi-context evaluation, combining multiple contexts (e.g., user, organization, subscription). By default, the controller calls evaluateStringFlag but you could adjust it as needed.
@@ -139,7 +139,7 @@ Query Parameters
 
 These are all combined into a multi-context within LaunchDarklyService.buildMultiContext.
 
-Example
+### Example
 
 GET http://localhost:8080/flags/multi?flagKey=my-string-flag&userId=alice123&userRole=admin&orgId=someOrg&subscription=premium
 
@@ -169,20 +169,20 @@ DetailResponse (for /flags/detail)
   "reason": "RULE_MATCH"
 }
 
-Logs
+# Logs
 
 The controller logs requests at INFO level and logs the final evaluated flag value at DEBUG level. To see detailed logs, ensure your logging configuration allows DEBUG messages for com.idp.launchdarkly.FeatureFlagController.
 
-Frequently Asked Questions
-	1.	What happens if flagKey is missing?
+# Frequently Asked Questions
+1.	What happens if flagKey is missing?
 	•	The ldService methods may return the default variation defined in your LaunchDarkly environment or the fallback value specified in code (e.g., "default-string").
-	2.	Can I evaluate custom data types?
+2.	Can I evaluate custom data types?
 	•	Yes, you can modify the controller or the LaunchDarklyService to handle numeric variations or more complex logic as needed.
-	3.	How do I set up a multi-context in LaunchDarkly?
+3.	How do I set up a multi-context in LaunchDarkly?
 	•	Typically, you define contexts in the LaunchDarkly dashboard to target rules by user ID, organization ID, etc. Then pass those context fields to LDContext.multi(...) or a custom builder pattern (as shown in your code) to combine them.
 
 Troubleshooting
-	•	No SDK key or invalid credentials: Ensure your LaunchDarklyService is using a valid LaunchDarkly SDK key. You’ll get errors in logs if the connection fails.
+•	No SDK key or invalid credentials: Ensure your LaunchDarklyService is using a valid LaunchDarkly SDK key. You’ll get errors in logs if the connection fails.
 	•	Flag not found: If you provide a flagKey that doesn’t exist, LaunchDarkly returns the default variation or an error in logs.
 	•	Network issues: Make sure the application can reach the LaunchDarkly service. Firewalls or missing proxy configs can block requests.
 
