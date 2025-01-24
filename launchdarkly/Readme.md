@@ -181,13 +181,13 @@ The controller logs requests at INFO level and logs the final evaluated flag val
 3.	How do I set up a multi-context in LaunchDarkly?
 	•	Typically, you define contexts in the LaunchDarkly dashboard to target rules by user ID, organization ID, etc. Then pass those context fields to LDContext.multi(...) or a custom builder pattern (as shown in your code) to combine them.
 
-Troubleshooting
-•	No SDK key or invalid credentials: Ensure your LaunchDarklyService is using a valid LaunchDarkly SDK key. You’ll get errors in logs if the connection fails.
-	•	Flag not found: If you provide a flagKey that doesn’t exist, LaunchDarkly returns the default variation or an error in logs.
-	•	Network issues: Make sure the application can reach the LaunchDarkly service. Firewalls or missing proxy configs can block requests.
+# Troubleshooting
+- 	No SDK key or invalid credentials: Ensure your LaunchDarklyService is using a valid LaunchDarkly SDK key. You’ll get errors in logs if the connection fails.
+- 	Flag not found: If you provide a flagKey that doesn’t exist, LaunchDarkly returns the default variation or an error in logs.
+- 	Network issues: Make sure the application can reach the LaunchDarkly service. Firewalls or missing proxy configs can block requests.
 
-Additional Resources
-	•	LaunchDarkly Java SDK Docs
-	•	Evaluation reasons & detail objects
-	•	JSON variations
-	•	Multi-context usage
+# Additional Resources
+	- 	LaunchDarkly Java SDK Docs
+	- 	Evaluation reasons & detail objects
+	- 	JSON variations
+	- 	Multi-context usage
