@@ -1,4 +1,0 @@
-dsconfig set-log-publisher-prop \
-    --publisher-name 'Console JSON LDAP Access Logger'  \
-    --set enabled:true  
-

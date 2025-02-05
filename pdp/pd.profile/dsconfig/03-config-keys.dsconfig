@@ -1,0 +1,3 @@
+dsconfig create-policy-configuration-key --key-name FeatureSwitchURL --set policy-configuration-value:http://ld-sidecar::8081
+
+dsconfig create-policy-configuration-key --key-name PDPKillSwitchName --set policy-configuration-value:kill-policy

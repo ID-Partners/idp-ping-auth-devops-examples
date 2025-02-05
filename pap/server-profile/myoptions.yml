@@ -2,6 +2,8 @@
 # using the --optionsFile option. Run `setup --help` for further
 # instructions.
 core:
+  FeatureSwitchURL: http://ld-sidecar::8081
+  PDPKillSwitchName: kill-policy
   # Use a JWT claim other than "sub" for the OIDC User ID.
   #
   #  Authentication.oidcUserIdField: jwt_claim
@@ -31,6 +33,7 @@ core:
   # using the notation '${environment-variable}'.
   #
   #  PolicyConfigurationKeyName: PolicyConfigurationKeyValue
+
 keystores:
   # Define key stores used by policy information providers here.
   #

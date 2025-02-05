@@ -1,8 +1,23 @@
 dsconfig set-log-publisher-prop \
   --publisher-name 'Policy Decision Logger'  \
   --set log-file:"logs/${INSTANCE_ID}-policy-decisions.log" \
-  --set sign-log:true 
+  --set sign-log:true \
+  --set include-pdp-response:true 
+
 
 dsconfig set-log-publisher-prop \
     --publisher-name 'Policy Query Logger'  \
     --set sign-log:true 
+
+
+dsconfig create-log-publisher --publisher-name "Encrypted Access" \
+  --type file-based-access \
+  --set enabled:true \
+  --set compression-mechanism:gzip \
+  --set encrypt-log:true \
+  --set log-file:logs/encrypted-access \
+  --set "rotation-policy:24 Hours Time Limit Rotation Policy" \
+  --set "rotation-policy:Size Limit Rotation Policy" \
+  --set "retention-policy:File Count Retention Policy" \
+  --set "retention-policy:Free Disk Space Retention Policy" \
+  --set "retention-policy:Size Limit Retention Policy"
