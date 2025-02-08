@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="dyn-auth-examples" tests="1" time="0.060">
-  <testsuite name="http://kong:8000/mock-payment" id="3573e3c4-8f0a-45b5-a6a7-4cf47af4813e" timestamp="2025-02-05T02:28:47.174Z" tests="0" failures="0" errors="0" time="0.060"/>
+<testsuites name="dyn-auth-examples" tests="1" time="0.250">
+  <testsuite name="http://kong:8000/mock-payment" id="d5725319-c05b-4f5f-bc83-b5ba0aad29fe" timestamp="2025-02-08T01:07:14.194Z" tests="0" failures="0" errors="0" time="0.250"/>
 </testsuites>

@@ -61,10 +61,10 @@ routes:
     methods:
       - GET
     plugins:
-      - name: ping-auth
+      - name: idp-ping-auth
         config:
           service_url: https://ping-authorize:1443/
-          shared_secret: 2FederateM0re
+          shared_secret: "{vault://env/gateway-secret}"
           secret_header_name: CLIENT_TOKEN
           verify_service_certificate: false
           enable_debug_logging: false
