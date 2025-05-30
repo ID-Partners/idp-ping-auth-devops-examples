@@ -1,0 +1,108 @@
+dsconfig create-external-server \
+    --server-name policy-server  \
+    --type policy  \
+    --set base-url:https://ping-authorize-pap:1443  \
+    --set hostname-verification-method:allow-all  \
+    --set trust-manager-provider:JKS  \
+    --set shared-secret:AACYZWLkGdje0CdCOUatFyk2OXDYLV5wR/4=  \
+    --set decision-node:6ae6edd5-0283-4ec8-ac84-08df56df1f63  \
+    --set branch:AuthZEN 
+
+dsconfig create-authorization-policy-decision-shared-secret \
+    --secret-name json-api-secret  \
+    --set shared-secret:AACL+EJHllh3Fpnq+JJTdb4NARTbIf0uxPk= 
+
+dsconfig create-external-attribute-cache \
+    --cache-name pdp-cache  \
+    --type redis-single-instance  \
+    --set redis-node-addresses:rediss://redis-stack:6379 
+
+dsconfig create-external-attribute-cache \
+    --cache-name test  \
+    --type redis-elasticache  \
+    --set redis-replication-group-id:test 
+
+dsconfig set-policy-decision-service-prop \
+    --set pdp-mode:external  \
+    --set policy-server:policy-server  \
+    --set trust-framework-version:v2  \
+    --set decision-response-view:decision-tree  \
+    --set decision-response-view:evaluated-entities  \
+    --set decision-response-view:evaluation-log-with-attribute-values  \
+    --set decision-response-view:request 
+
+dsconfig create-policy-configuration-key \
+    --key-name FeatureSwitchURL  \
+    --set policy-configuration-value:AADAWd2x6rpmmYgF4KYniOpr8gl6Vo9wq8gOHa/gdQ+cLA== 
+
+dsconfig create-policy-configuration-key \
+    --key-name PDPKillSwitchName  \
+    --set policy-configuration-value:AACDe7VOBVdouwJrpqU4szqTYNhupWMSuEo= 
+
+dsconfig create-sideband-api-endpoint \
+    --endpoint-name 'CDR Records'  \
+    --set service:CDR.{resourceType}  \
+    --set resource-path:{resourceType}/{_TrailingPath}  \
+    --set http-auth-evaluation-behavior:do-not-evaluate  \
+    --set base-path:/cdr/{brand}/{resourceType} 
+
+dsconfig set-sideband-api-endpoint-prop \
+    --endpoint-name Default  \
+    --set service:Showcase 
+
+dsconfig create-sideband-api-endpoint \
+    --endpoint-name 'Digital Payment Limits API'  \
+    --set service:Limits  \
+    --set http-auth-evaluation-behavior:do-not-evaluate  \
+    --set base-path:/limits/ 
+
+dsconfig create-sideband-api-shared-secret \
+    --secret-name sideband  \
+    --set shared-secret:AADdWHiLm8jX5FBdAFHlnjGgMakhX8X1W7A= 
+
+dsconfig set-http-servlet-extension-prop \
+    --extension-name 'Available State'  \
+    --set base-context-path:/healthcheck 
+
+dsconfig set-http-servlet-extension-prop \
+    --extension-name 'JSON PDP API'  \
+    --set correlation-id-response-header:X-CBA-DynAuth-Trace-Id  \
+    --set shared-secret-header-name:client  \
+    --set shared-secrets:json-api-secret 
+
+dsconfig set-http-servlet-extension-prop \
+    --extension-name 'Sideband API'  \
+    --set request-context-method:request  \
+    --set shared-secret-header-name:CLIENT_TOKEN  \
+    --set shared-secrets:sideband 
+
+dsconfig set-log-publisher-prop \
+    --publisher-name 'Console JSON LDAP Access Logger'  \
+    --set enabled:true 
+
+dsconfig create-log-publisher \
+    --publisher-name 'Encrypted Access'  \
+    --type file-based-access  \
+    --set enabled:true  \
+    --set log-file:logs/encrypted-access  \
+    --set 'rotation-policy:24 Hours Time Limit Rotation Policy'  \
+    --set 'rotation-policy:Size Limit Rotation Policy'  \
+    --set 'retention-policy:File Count Retention Policy'  \
+    --set 'retention-policy:Free Disk Space Retention Policy'  \
+    --set 'retention-policy:Size Limit Retention Policy'  \
+    --set compression-mechanism:gzip  \
+    --set encrypt-log:true 
+
+dsconfig set-log-publisher-prop \
+    --publisher-name 'Policy Decision Logger'  \
+    --set log-file:logs/sd1-task1-policy-decisions.log  \
+    --set sign-log:true 
+
+dsconfig set-log-publisher-prop \
+    --publisher-name 'Policy Query Logger'  \
+    --set sign-log:true 
+
+dsconfig set-monitor-provider-prop \
+    --provider-name 'Host System'  \
+    --reset enabled 
+

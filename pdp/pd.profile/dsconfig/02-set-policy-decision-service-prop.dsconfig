@@ -1,0 +1,7 @@
+dsconfig set-policy-decision-service-prop \
+    --add decision-response-view:decision-tree \
+    --add decision-response-view:request \
+    --add decision-response-view:evaluated-entities \
+    --add decision-response-view:evaluation-log-with-attribute-values  
+
+    

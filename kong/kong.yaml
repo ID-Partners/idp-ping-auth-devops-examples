@@ -1,75 +1,33 @@
 _format_version: "3.0"
-
-routes:
-  - name: mock-payment-route
-    paths:
-      - /mock-payment
-    methods:
-      - POST
-    plugins:
-      - name: ping-auth
-        config:
-          service_url: https://ping-authorize:1443/
-          shared_secret: 2FederateM0re
-          secret_header_name: CLIENT_TOKEN
-          verify_service_certificate: false
-          enable_debug_logging: false
-      - name: request-termination
-        config:
-          status_code: 200
-          content_type: application/json
-          body: '{"amount":100.5,"creditorAccount":"67890","currency":"USD","debtorAccount":"12345","status":"Payment Processed","transactionId":2865}'
-  - name: mock-cdr-route
-    paths:
-      - /cdr/cba/account
-    methods:
-      - POST
-    plugins:
-      - name: ping-auth
-        config:
-          service_url: https://ping-authorize:1443/
-          shared_secret: 2FederateM0re
-          secret_header_name: CLIENT_TOKEN
-          verify_service_certificate: false
-          enable_debug_logging: false
-      - name: request-termination
-        config:
-          status_code: 200
-          content_type: application/json
-          body: '{"amount":100.5,"creditorAccount":"67890","currency":"USD","debtorAccount":"12345","status":"Payment Processed","transactionId":2865}'
-  - name: LimitsPOST
-    paths:
-      - /limits
-    methods:
-      - POST
-    plugins:
-      - name: ping-auth
-        config:
-          service_url: https://ping-authorize:1443/
-          shared_secret: 2FederateM0re
-          secret_header_name: CLIENT_TOKEN
-          verify_service_certificate: false
-          enable_debug_logging: false
-      - name: request-termination
-        config:
-          status_code: 200
-          content_type: application/json
-          body: '{"amount":100.5,"creditorAccount":"67890","currency":"USD","debtorAccount":"12345","status":"Payment Processed","transactionId":2865}'
-  - name: LimitIntervalsGET
-    paths:
-      - /limits/intervals
-    methods:
-      - GET
-    plugins:
-      - name: idp-ping-auth
-        config:
-          service_url: https://ping-authorize:1443/
-          shared_secret: "{vault://env/gateway-secret}"
-          secret_header_name: CLIENT_TOKEN
-          verify_service_certificate: false
-          enable_debug_logging: false
-      - name: request-termination
-        config:
-          status_code: 200
-          content_type: application/json
-          body: '{"amount":100.5,"creditorAccount":"67890","currency":"USD","debtorAccount":"12345","status":"Payment Processed","transactionId":2865}'
+services:
+  - name: bank-api
+    url: http://bank-api:8083
+    routes:
+      - name: bank-accounts
+        paths:
+          - /accounts
+        strip_path: false
+        methods:
+          - GET
+        plugins:
+          - name: ping-auth
+            config:
+              service_url: https://ping-az-pdp:1443/
+              shared_secret: 2FederateM0re
+              secret_header_name: CLIENT_TOKEN
+              verify_service_certificate: false
+              enable_debug_logging: true
+      - name: bank-transactions
+        paths:
+          - /transactions
+        strip_path: false
+        methods:
+          - POST
+        plugins:
+          - name: ping-auth
+            config:
+              service_url: https://ping-az-pdp:1443/
+              shared_secret: 2FederateM0re
+              secret_header_name: CLIENT_TOKEN
+              verify_service_certificate: false
+              enable_debug_logging: true

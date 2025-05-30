@@ -59,7 +59,7 @@ curl --location 'http://kong:8000/payment' \
 }'
 
 
- docker compose -f docker-compose.yml -f docker-compose.local.yml up
+ docker compose -f docker-compose.yml  up
 
 
  **{

@@ -1,3 +1,5 @@
-dsconfig set-http-servlet-extension-prop \
-    --extension-name 'Available State'  \
-    --set base-context-path:/healthcheck 
+dsconfig set-http-servlet-extension-prop --extension-name 'Available State' --set base-context-path:/healthcheck 
+
+dsconfig set-gauge-prop --gauge-name "HTTP Processing (Percent)" --set major-value:5 --set server-degraded-severity-level:major --set server-unavailable-severity-level:critical
+
+dsconfig set-gauge-prop --gauge-name "Endpoint Average Response Time (Milliseconds)" --set minor-value:200 --set major-value:500 --set critical-value:2000 

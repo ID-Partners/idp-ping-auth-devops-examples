@@ -1,0 +1,12 @@
+# This file contains metadata used by the file-based cipher stream provider to
+# protect the contents of the encryption settings database.  Its contents must
+# not be altered.  Changing anything in this file will prevent the server from
+# being able to access the content of the encryption settings database
+{ "keyFactoryAlgorithm":"PBKDF2WithHmacSHA256",
+  "keyFactorySaltBase64":"B/JiWU4DEKTxJlUSFTICsA==",
+  "keyFactoryIterationCount":600000,
+  "derivedKeyLengthBits":256,
+  "cipherAlgorithm":"AES",
+  "cipherTransformation":"AES/GCM/PKCS5Padding",
+  "initializationVectorBase64":"975lXVCe7D/hM3CH/rIZOA==",
+  "gcmTagLengthBits":128 }

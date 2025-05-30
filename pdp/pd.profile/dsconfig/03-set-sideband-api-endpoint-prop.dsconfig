@@ -11,16 +11,3 @@ dsconfig set-http-servlet-extension-prop \
 dsconfig set-sideband-api-endpoint-prop \
     --endpoint-name Default  \
     --set "service:${SIDEBAND_SERVICE}"  
-
-dsconfig create-sideband-api-endpoint \
-  --endpoint-name "CDR Records" \
-  --set base-path:/cdr/{brand}/{resourceType} \
-  --set service:CDR.{resourceType} \
-  --set resource-path:{resourceType}/{_TrailingPath} \
-  --set http-auth-evaluation-behavior:do-not-evaluate
-
-  dsconfig create-sideband-api-endpoint \
-  --endpoint-name "Digital Payment Limits API" \
-  --set base-path:/limits/ \
-  --set service:Limits \
-  --set http-auth-evaluation-behavior:do-not-evaluate

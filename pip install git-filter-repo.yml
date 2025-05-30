@@ -1,0 +1,3 @@
+pip install git-filter-repo
+
+git filter-repo --path ping-authorize/pd.profile/server-root/pre-setup/PingAuthorize.lic --invert-paths --force

@@ -1,0 +1,304 @@
+services:
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"   # Redis default port
+    environment:
+      - REDIS_ARGS=--requirepass mypassword  # Set Redis password
+    networks:
+      - internal-network
+    volumes:
+      - ./redis-data:/data  # Persist Redis data
+
+  ping-authorize-pap:
+    image: pingidentity/pingauthorizepap:10.2.0.1-latest
+    container_name: ping-authorize-pap
+    ports:
+      - "7443:1443"
+    environment:
+     - PING_EXTERNAL_BASE_URL=localhost:7443
+     - LICENSE_DIR=/config
+     - PING_IDENTITY_ACCEPT_EULA=YES
+     - LICENSE_FILE_NAME=PingAuthorize.lic
+    #  - PING_IDENTITY_DEVOPS_USER=<enter your user>
+    #  - PING_IDENTITY_DEVOPS_KEY=<enter your key>
+     - TAIL_LOG_FILES=/logs/access.log
+     - DECISION_POINT_SHARED_SECRET=2FederateM0re
+     - PING_OPTIONS_FILE=/opt/server-profile/instance/myoptions.yml 
+     - KEYSTORE_FILE=/config/certs/pap.jks
+     - KEYSTORE_TYPE=JKS
+     - KEYSTORE_PIN_FILE=/config/certs/passwords.txt
+     - CERTIFICATE_NICKNAME=pap
+     - ADDITIONAL_SETUP_ARGS="--enableSelfGovernance"
+    #  - PING_CLIENT_ID=ac_client
+    #  - PING_OIDC_CONFIGURATION_ENDPOINT=https://localhost:9031/.well-known/openid-configuration
+    #  - PING_SCOPE=oidc email profile phone
+    #  - PING_OIDC_TLS_VALIDATION=NONE
+    volumes:
+      - ./pap:/config
+      - ./pap/server-profile:/opt/server-profile/instance
+      - ./certs:/config/certs
+    networks:
+      - external-network
+      - internal-network
+
+  ld-sidecar:
+    build:
+      context: ./launchdarkly
+      dockerfile: Dockerfile
+    container_name: ld-sidecar
+    ports:
+      - "8082:8081"
+    environment:
+      - LAUNCHDARKLY_SDKKEY=sdk-0b9b2fb6-e74e-46f8-8a75-eab8a0e9055f
+      - LAUNCHDARKLY_APPID=demo-app
+      - LAUNCHDARKLY_VERSION=1.0.0
+      - SERVER_PORT=8081
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM_EXAMPLE=DEBUG
+      - LAUNCHDARKLY_LOGLEVEL=INFO
+    networks:
+      - internal-network
+    depends_on:
+      - ping-authorize
+
+
+  ping-authorize:
+    image: pingidentity/pingauthorize:10.2.0.1-latest
+    container_name: ping-authorize-pdp
+    volumes:
+      - /run/secrets   
+      - ./pdp:/config
+      - ./pdp/pd.profile:/opt/staging/pd.profile
+      - ./webapps/console.war:/opt/in/instance/webapps/console.war  
+      - ./certs:/config/certs
+    tmpfs:
+      - /run/secrets:rw,nosuid,nodev,noexec,mode=0777  # Set tmpfs with write permissions
+    ports:
+      - "1389:1389"
+      - "1636:1636"                          # Map the LDAP port
+      - "6443:1443"                          # Map the HTTPS port
+    environment:
+      - LICENSE_DIR=/config
+      - INSTANCE_ID=sd1-task1
+      - PING_IDENTITY_ACCEPT_EULA=YES
+      - LICENSE_FILE_NAME=pingauthorize.lic
+      - PING_INSTANCE_NAME=AuthZen
+      - JSON_API_HEADER_NAME=client
+      - PDP_SHARED_SECRET=2FederateM0re
+      - SIDEBAND_SECRET_HEADER_NAME=CLIENT_TOKEN
+      - SIDEBAND_SHARED_SECRET=2FederateM0re
+      - SIDEBAND_SERVICE=Showcase
+      - POLICY_NODE_ID=98aec22a-4a6c-41b0-b18f-1ee5588cb2a4
+      - POLICY_BRANCH=Demo
+      # - DEPLOYMENT_PACKAGE</opt/staging/pd.profile/Deployment-Package-cf45b188-2d1c-4bde-ab37-6c3dab34ab80.deploymentpackage
+    networks:
+      - external-network
+      - internal-network
+
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kong
+    ports:
+      - "5432:5432"
+    volumes:
+      - kong-db-data:/var/lib/postgresql/data
+    networks:
+      - internal-network
+    command: bash -c "rm -rf /var/lib/postgresql/data/* && docker-entrypoint.sh postgres"
+
+
+  kong:
+    build:
+      context: ./kong
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      KONG_DATABASE: "postgres"
+      KONG_PG_HOST: postgres
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+      KONG_PG_DATABASE: kong
+      GATEWAY_SECRET: 2FederateM0re
+      KONG_LOG_LEVEL: info
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+      KONG_PLUGINS: bundled,idp-ping-auth
+      KONG_SSL_CERT: "/etc/kong/certs/kong.crt"
+      KONG_SSL_CERT_KEY: "/etc/kong/certs/kong.key"
+      KONG_SSL_CLIENT_CERTIFICATE: "/etc/kong/certs/ca.crt"
+      KONG_LUA_SSL_TRUSTED_CERTIFICATE: system  
+      UPSTREAM_MTLS_CERT: |
+        -----BEGIN CERTIFICATE-----
+        MIID/DCCAeSgAwIBAgIUKIeDpf3ZD/hyOFP5z+r9b6hlyi0wDQYJKoZIhvcNAQEL
+        BQAwFTETMBEGA1UEAwwKTXkgUm9vdCBDQTAeFw0yNTAyMjgwNjExMjhaFw0yNjAy
+        MjgwNjExMjhaMBcxFTATBgNVBAMMDGtvbmctZ2F0ZXdheTCCASIwDQYJKoZIhvcN
+        AQEBBQADggEPADCCAQoCggEBAN/nqrPP0chsA7aU5cPDzJa0TW64igBBRwqC8QAZ
+        PJb5BnkeSp3vyxlWW3n3EpTnn73dr3fcfSPr/FKzxJZaugQtiugfX57unzhwYW6g
+        mKEHOeuDYTqqeATnn8dLmJjhaEC3q+bL7VIa3raUdITYhOmUiGanRScKg6A43idD
+        G6go8Ua5nTAxfKBfCl7pOnBfPCqj5O+ddKJOgZgkIfN+Y5qdXHvHlSMVCMXyZt4Y
+        A0pEGd+oO5J/R6dx36nSI6oT49QjCbeIaXdna+F2Pu2flzTXf5G0vamKAzbKmn10
+        yk+T6pJaDwNQQ2XaDJIChTT8u8YsBgiwFRYUQpX4+ieWPOMCAwEAAaNCMEAwHQYD
+        VR0OBBYEFNnBGziUsSf/54JdxfSR7ZY/KC2gMB8GA1UdIwQYMBaAFPPs+u0tvjMZ
+        jo+JUWDsUatpTmKzMA0GCSqGSIb3DQEBCwUAA4ICAQBVPRJYYsRkDuycnSQcpDNV
+        6GcI59XTUsENraN9OUhGG3kc9wb0V3x1bye6rZBxNaGeaV56w/lnkBN+ty3NbrSV
+        xGNRbbkkJNeKUbHp3UfyLEehFnSXzLzOXWxdhsUG2L6vJEGYyFnoF9lSqKhLcami
+        dhc29vhuE8M4uSedsEVrIXoj1xIyvn3iFdCK+zPPpexc+PupHRoksrWTmaxXQeGy
+        WcPcoIoHkZeaPfxcbX1a2T98IPTmyUsL9gbBVXprLbMYSLUHY7+37yx2NDtB10sU
+        2usOmKDWV8FWNyFDaYd0rRQdERwu7UugfqZBxDp3ezp4wOCKJ9dwZLCb0ZwDi9AV
+        sZr4O54uAgcAFqXBdTDUXnd+DYPAoQvr73wxAAooHg97yC00bkgYceeVtqzMBggR
+        LesE57qY7sZ/E16c0fXojS/blVHDFT2Du9IRNgkWqTJyKFlcACgdC8aphQhQ+KNq
+        uvh4w9UabkbzIfjZ3xWtZu6/SYD9MUWy5RTUbgZSkUaHeV2WlSH3Fly+CVjUTpwd
+        PcSNbyZjQ+uCi1E2jdaCWXiC/JI8eyfHqVuWSmMe4X7px+52fRrlkcRZeannSBSC
+        +LgpkFcr/ycBfQUi8QiVVmfS4qAr18A6rEawxJz/NFs+5w09P9KnJhmEOHHhM8hM
+        i1ECitu8D6kkf2mhMQ3K9w==
+        -----END CERTIFICATE-----
+      UPSTREAM_MTLS_CERT_KEY: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDf56qzz9HIbAO2
+        lOXDw8yWtE1uuIoAQUcKgvEAGTyW+QZ5Hkqd78sZVlt59xKU55+93a933H0j6/xS
+        s8SWWroELYroH1+e7p84cGFuoJihBznrg2E6qngE55/HS5iY4WhAt6vmy+1SGt62
+        lHSE2ITplIhmp0UnCoOgON4nQxuoKPFGuZ0wMXygXwpe6TpwXzwqo+TvnXSiToGY
+        JCHzfmOanVx7x5UjFQjF8mbeGANKRBnfqDuSf0encd+p0iOqE+PUIwm3iGl3Z2vh
+        dj7tn5c013+RtL2pigM2ypp9dMpPk+qSWg8DUENl2gySAoU0/LvGLAYIsBUWFEKV
+        +PonljzjAgMBAAECggEAE/0zFVmost0U+WHfOVQezOPmRDI5YvIKjS4V2E2brFn2
+        PmET7ETe7uSLLVJMPse6HR5p1Q7Ci67WGFQJz7QXbNp1m8960k3sIDYraWlXXVji
+        m0H5YvfN1/8Ns28hfaFYYbhQ1aPzDFdvXQFxfY91UWnidR4NygFISvxVgoMDnxMN
+        2QF9ppJxbo0VSpfyre9/Iq4rR1JvmnBwHed90/GOc5bcaXZv42AKgEPFAz0qgsYn
+        ZJM0nWhjU6SVtiiyXZSaQis247sHwo7Bo6/I9a5dF0vdrhm/3ft7pH2EKpIB65qC
+        TkkPNT+LQI6k4Xd6epOJIlEHoGJqZTrsvreWXVWtkQKBgQD8J9YcObArAtOSds8O
+        Kx+/pDxh+mst1AL37f45QKzH2Gxb2SI7qRH6/d5l7WJShn0Qub8u8Z2qG4pcwexK
+        RNTVfBOSKMgHT19a/rBGY+aLWitV08QJpFqeMPVkpsxu/mamNqyRq823etGSM2SC
+        VcDUm97gIOnZQW2T8HKwrzLPtwKBgQDjUZFtHO9nzJ6swkvkgBlfe023MCw3J+cj
+        4FDnwrhNCZgbIvM1cs3jd1SDIKywHquwxEazzAywvqVq4NOkTNdhxtXbZkXtdFEu
+        ISzahzJ5vvFSoLg1Y20a68Y8JyQkvumOZC0nKqecc/RyCKrTMcorwvaNH0DjROck
+        iZO3UwCkNQKBgA2gwYuo+oJ4lqK11R746bBb2f+Zny1M5hQsQq8pda0fX0vfgmAj
+        FRuxmNF9cPDw39WFlHWfDVxiPKoiuPiSm8Yl/JDLr3PlsEuktDY5s/4YE3uCBHhY
+        76TZFIoqEaZ2DWoyTkVZObcO5kC2kloQ9GkJO5R1cu4RATEbr7co4OAlAoGBAI4c
+        MUlAfJ6sukoQkbeBKduaT0SFti6pIIQ6OPoarnNi2xej6t3wLqzUrh3n8G2OTxGM
+        MxM2LnzUQr+lXEpry36R+qJVtsOzIwkurkbTnIemCmH4nhCqXswkt+JlKeBbBdIB
+        6ISC0xQpHZmot3qetuBS2yXwcvVh3wrlg1Zpao49AoGAFbE4FYou/nPnnPfXgI4D
+        B3qg72ztmq6rZ73lgrwNTUhUchGTTWK+vLXaUv75DPiu1lvvvpae596iVYR/vMBE
+        4UFNWJS/hksFblTVUuLxJYM1iArxPxpt/cdrs2uYRN2heZ1z0dRxemshR/gTQiqd
+        hp+x0rl56z8eyMCePGBYu+A=
+        -----END PRIVATE KEY-----
+    ports:
+      - "8005:8000"  # Proxy
+      - "9443:8443"  # Proxy SSL
+      - "8001:8001"  # Admin
+      - "8002:8002"  # GUI
+      - "8444:8444"  # Admin SSL
+    volumes: 
+      - ../kong-plugin-ping-auth/idp-ping-auth:/usr/local/share/lua/5.1/kong/plugins/idp-ping-auth
+      - ./kong/kong.yaml:/kong/declarative/kong.yaml
+      - ./certs-gateways:/etc/kong/certs
+    depends_on:
+      - ping-authorize
+      - postgres
+      - mocpdp
+    command: >
+      /bin/sh -c "
+      kong migrations bootstrap && 
+      kong start"
+    networks:
+      - external-network
+      - internal-network
+
+
+  mocpdp:
+    image: kong/kong-gateway:3.9
+    restart: always
+    container_name: mocpdp
+    environment:
+      KONG_ROLE: data_plane
+      KONG_DATABASE: off
+      KONG_VITALS: off
+      KONG_CLUSTER_MTLS: pki
+      KONG_LOG_LEVEL: info
+      KONG_CLUSTER_CONTROL_PLANE: 1391d812a3.us.cp0.konghq.com:443
+      KONG_CLUSTER_SERVER_NAME: 1391d812a3.us.cp0.konghq.com
+      KONG_CLUSTER_TELEMETRY_ENDPOINT: 1391d812a3.us.tp0.konghq.com:443
+      KONG_CLUSTER_TELEMETRY_SERVER_NAME: 1391d812a3.us.tp0.konghq.com
+      KONG_PLUGINS: "bundled,idp-ping-auth"
+      KONG_CLUSTER_CERT: |
+        -----BEGIN CERTIFICATE-----
+        MIIB+TCCAaCgAwIBAgIBATAKBggqhkjOPQQDBDAuMSwwCQYDVQQGEwJVUzAfBgNV
+        BAMeGABrAG8AbgBuAGUAYwB0AC0AVABFAHMAdDAeFw0yNTAyMjgwNDM0MDRaFw0z
+        NTAyMjgwNDM0MDRaMC4xLDAJBgNVBAYTAlVTMB8GA1UEAx4YAGsAbwBuAG4AZQBj
+        AHQALQBUAEUAcwB0MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE4heJW8mQ7GtV
+        N/beN/rJnxwoFlEbXxQ0No9UOUy4TBo3uBgcIdd0dmpXeE7vX+uNGiZgvjSy0F32
+        aswnce9Rh6OBrjCBqzAMBgNVHRMBAf8EAjAAMAsGA1UdDwQEAwIABjAdBgNVHSUE
+        FjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwFwYJKwYBBAGCNxQCBAoMCGNlcnRUeXBl
+        MCMGCSsGAQQBgjcVAgQWBBQBAQEBAQEBAQEBAQEBAQEBAQEBATAcBgkrBgEEAYI3
+        FQcEDzANBgUpAQEBAQIBCgIBFDATBgkrBgEEAYI3FQEEBgIEABQACjAKBggqhkjO
+        PQQDBANHADBEAiB8l3jUDOb781EODauzgg4UgqopfXIq56uhRUA8irSb6gIgZIUN
+        UjEVpxUSYIhmrivsvgW+1ZIfIvCsGN22F+wXwg8=
+        -----END CERTIFICATE-----
+      KONG_CLUSTER_CERT_KEY: |
+        -----BEGIN PRIVATE KEY-----
+        MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgXTaUE28i4x34hN9f
+        +6RE0JfSAxacCZ8iWK2O/qIRrBegCgYIKoZIzj0DAQehRANCAATiF4lbyZDsa1U3
+        9t43+smfHCgWURtfFDQ2j1Q5TLhMGje4GBwh13R2ald4Tu9f640aJmC+NLLQXfZq
+        zCdx71GH
+        a575PIJ3
+        -----END PRIVATE KEY-----
+      KONG_LUA_SSL_TRUSTED_CERTIFICATE: system
+      KONG_KONNECT_MODE: on
+      KONG_CLUSTER_DP_LABELS: created-by:quickstart,type:docker-macOsArmOS
+      KONG_ROUTER_FLAVOR: expressions
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    volumes: 
+      - ../kong-plugin-ping-auth/idp-ping-auth:/usr/local/share/lua/5.1/kong/plugins/idp-ping-auth
+      - ./certs/:/certs
+    networks:
+      - external-network
+      - internal-network
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    restart: always
+    ports:
+      - "7474:7474"
+      - "${BOLT_PORT}:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - ./plugins:/plugins
+    environment:
+      - NEO4J_AUTH=${NEO4J_Username}/${NEO4J_Password}
+
+  idp-entitlements:
+    image: idpartners.azurecr.io/idp-entitlements:latest
+    container_name: idp-entitlements
+    restart: always
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+    environment:
+      - graphDB:BoltConnectionString=${BOLT_CONNECTION_STRING}
+      - graphDB:Username=${NEO4J_Username}
+      - graphDB:Password=${NEO4J_Password}
+      - api:ApiKey=${API_KEY}
+    depends_on:
+      - neo4j
+      
+volumes:
+  kong-db-data:
+  neo4j-data:
+  neo4j-logs:
+networks:
+  internal-network:
+    driver: bridge # Internal services will communicate here
+  external-network:
+    driver: bridge # Only mtls is exposed externally
