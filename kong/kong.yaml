@@ -1,8 +1,24 @@
 _format_version: "3.0"
 services:
-  - name: bank-api
+  - name: bank-api-proxy
     url: http://bank-api:8083
     routes:
+      - name: posts
+        paths:
+          - /posts
+        strip_path: false
+        hosts:
+          - localhost
+        methods:
+          - GET
+        plugins:
+          - name: ping-auth
+            config:
+              service_url: https://ping-az-pdp:1443/
+              shared_secret: 2FederateM0re
+              secret_header_name: CLIENT_TOKEN
+              verify_service_certificate: false
+              enable_debug_logging: true
       - name: bank-accounts
         paths:
           - /accounts

@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -35,20 +37,52 @@ var mockAccounts = []Account{
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
+	log.Println("[DEBUG] /health endpoint hit")
+	body := []byte("bank-api is up")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("bank-api is up"))
+	w.Write(body)
+	if f, ok := w.(http.Flusher); ok {
+		log.Println("[DEBUG] Flushing /health response to client")
+		f.Flush()
+	}
 }
 
 func accountsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("[DEBUG] /accounts endpoint hit")
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(mockAccounts)
+	data, err := json.Marshal(mockAccounts)
+	if err != nil {
+		http.Error(w, "failed to marshal response", http.StatusInternalServerError)
+		return
+	}
+	log.Printf("[DEBUG] Marshaled accounts response: %s\n", string(data))
+	data = append(data, '\n')
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Header().Set("Connection", "close")
+	w.WriteHeader(http.StatusOK)
+	log.Printf("[DEBUG] Wrote OK Status and closed")
+
+	if _, err := w.Write(data); err != nil {
+		http.Error(w, "failed to write response", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[DEBUG] Wrote %d bytes with status 200 to client\n", len(data))
+	if f, ok := w.(http.Flusher); ok {
+		log.Println("[DEBUG] Flushing response to client")
+		f.Flush()
+	} else {
+		log.Println("[DEBUG] Flusher interface not supported on ResponseWriter")
+	}
 }
 
 func accountHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[DEBUG] /accounts/{id} endpoint hit: path=%s\n", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -57,8 +91,26 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/accounts/")
 	for _, acct := range mockAccounts {
 		if acct.ID == id {
+			log.Printf("[DEBUG] Found account: %+v\n", acct)
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(acct)
+			data, err := json.Marshal(acct)
+			if err != nil {
+				http.Error(w, "failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			data = append(data, '\n')
+			w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+			if _, err := w.Write(data); err != nil {
+				http.Error(w, "failed to write response", http.StatusInternalServerError)
+				return
+			}
+			log.Printf("[DEBUG] Wrote %d bytes with status 200 to client\n", len(data))
+			if f, ok := w.(http.Flusher); ok {
+				log.Println("[DEBUG] Flushing response to client")
+				f.Flush()
+			} else {
+				log.Println("[DEBUG] Flusher interface not supported on ResponseWriter")
+			}
 			return
 		}
 	}
@@ -66,6 +118,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func transactionHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("[DEBUG] /transactions endpoint hit")
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -76,6 +129,7 @@ func transactionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return
 	}
+	log.Printf("[DEBUG] Decoded transaction request: %+v\n", req)
 
 	// Basic simulation: check accounts exist
 	var fromExists, toExists bool
@@ -99,10 +153,28 @@ func transactionHandler(w http.ResponseWriter, r *http.Request) {
 		Status:        "COMPLETED",
 		Timestamp:     time.Now().Format(time.RFC3339),
 	}
+	log.Printf("[DEBUG] Responding with transaction: %+v\n", resp)
 
 	w.Header().Set("Content-Type", "application/json")
+	jsonBytes, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
+	jsonBytes = append(jsonBytes, '\n')
+	w.Header().Set("Content-Length", strconv.Itoa(len(jsonBytes)))
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	if _, err := w.Write(jsonBytes); err != nil {
+		http.Error(w, "failed to write response", http.StatusInternalServerError)
+		return
+	}
+	log.Printf("[DEBUG] Wrote %d bytes with status 201 to client\n", len(jsonBytes))
+	if f, ok := w.(http.Flusher); ok {
+		log.Println("[DEBUG] Flushing response to client")
+		f.Flush()
+	} else {
+		log.Println("[DEBUG] Flusher interface not supported on ResponseWriter")
+	}
 }
 
 // randString generates a random alphanumeric string of given length.
