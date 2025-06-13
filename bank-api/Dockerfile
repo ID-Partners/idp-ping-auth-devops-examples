@@ -6,5 +6,5 @@ RUN go build -o bank-api
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /src/bank-api .
-EXPOSE 8083
+EXPOSE 8445
 ENTRYPOINT ["./bank-api"]

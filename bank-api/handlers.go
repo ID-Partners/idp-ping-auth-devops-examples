@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -39,7 +38,6 @@ var mockAccounts = []Account{
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	log.Println("[DEBUG] /health endpoint hit")
 	body := []byte("bank-api is up")
-	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 	if f, ok := w.(http.Flusher); ok {
@@ -61,12 +59,8 @@ func accountsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("[DEBUG] Marshaled accounts response: %s\n", string(data))
-	data = append(data, '\n')
-	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-	w.Header().Set("Connection", "close")
 	w.WriteHeader(http.StatusOK)
-	log.Printf("[DEBUG] Wrote OK Status and closed")
-
+	log.Printf("[DEBUG] Wrote OK Status")
 	if _, err := w.Write(data); err != nil {
 		http.Error(w, "failed to write response", http.StatusInternalServerError)
 		return
@@ -98,13 +92,12 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to marshal response", http.StatusInternalServerError)
 				return
 			}
-			data = append(data, '\n')
-			w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 			if _, err := w.Write(data); err != nil {
 				http.Error(w, "failed to write response", http.StatusInternalServerError)
 				return
 			}
 			log.Printf("[DEBUG] Wrote %d bytes with status 200 to client\n", len(data))
+			// allow default chunked encoding, no manual Content-Length
 			if f, ok := w.(http.Flusher); ok {
 				log.Println("[DEBUG] Flushing response to client")
 				f.Flush()
@@ -161,8 +154,6 @@ func transactionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		return
 	}
-	jsonBytes = append(jsonBytes, '\n')
-	w.Header().Set("Content-Length", strconv.Itoa(len(jsonBytes)))
 	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write(jsonBytes); err != nil {
 		http.Error(w, "failed to write response", http.StatusInternalServerError)

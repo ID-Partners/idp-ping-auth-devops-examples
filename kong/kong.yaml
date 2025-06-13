@@ -1,7 +1,11 @@
 _format_version: "3.0"
 services:
   - name: bank-api-proxy
-    url: http://bank-api:8083
+    url: https://bank-api:8445
+    tls_verify: false
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
     routes:
       - name: posts
         paths:
@@ -19,6 +23,8 @@ services:
               secret_header_name: CLIENT_TOKEN
               verify_service_certificate: false
               enable_debug_logging: true
+              connection_timeout_ms: 30000
+              connection_keepAlive_ms: 120000
       - name: bank-accounts
         paths:
           - /accounts
@@ -33,6 +39,8 @@ services:
               secret_header_name: CLIENT_TOKEN
               verify_service_certificate: false
               enable_debug_logging: true
+              connection_timeout_ms: 30000
+              connection_keepAlive_ms: 120000
       - name: bank-transactions
         paths:
           - /transactions
@@ -47,3 +55,5 @@ services:
               secret_header_name: CLIENT_TOKEN
               verify_service_certificate: false
               enable_debug_logging: true
+              connection_timeout_ms: 30000
+              connection_keepAlive_ms: 120000
